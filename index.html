@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kalkulator Kalori — Satu Makan</title>
+  <meta name="description" content="Kalkulator Kalori: hitung kalori makanan per-sesi, BMR & TDEE, chart makro, rekomendasi, simpan lokal, PDF & share." />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --accent:#2563eb; /* biru */
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --success:#16a34a;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --radius:12px;
+      --maxw:960px;
+      font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#0f172a;line-height:1.45}
+    .container{max-width:var(--maxw);margin:18px auto;padding:16px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .brand{font-weight:700;font-size:18px;color:var(--accent)}
+    .subtitle{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:900px){.grid{grid-template-columns:420px 1fr}}
+    .card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text], input[type=number], select, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+    .row{display:flex;gap:8px}
+    .col{flex:1}
+    button.primary{background:var(--accent);color:white;padding:10px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    button.ghost{background:transparent;border:1px solid #e6e9ef;padding:8px 10px;border-radius:10px;cursor:pointer}
+    .lead{margin:0;color:var(--muted)}
+    h2{margin:0 0 8px 0}
+    .small{font-size:13px;color:var(--muted)}
+    .result-grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:700px){.result-grid{grid-template-columns:1fr 320px}}
+    .kpi{display:flex;gap:12px;flex-wrap:wrap}
+    .kpi .item{background:#fbfdff;padding:10px;border-radius:10px;flex:1;min-width:140px}
+    .verdict{display:inline-block;padding:8px 10px;border-radius:10px;color:white;font-weight:600}
+    .legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .legend .lg{display:flex;gap:6px;align-items:center}
+    .colorbox{width:12px;height:12px;border-radius:3px}
+    footer{margin-top:14px;text-align:center;color:var(--muted);font-size:13px}
+    .error{color:var(--danger);font-size:13px;margin-top:6px}
+    .hint{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="brand">Kalkulator Kalori — Satu Makan</div>
+        <div class="subtitle">Hitung kalori makanan, bandingkan dengan kebutuhan sesi, dapatkan saran praktis.</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- Left column: forms -->
+      <section class="card" aria-labelledby="dataDiriTitle">
+        <h2 id="dataDiriTitle">Data Diri</h2>
+        <p class="lead">Masukkan data dasar agar perhitungan personal.</p>
+        <div style="height:8px"></div>
+        <div>
+          <label for="nama">Nama pengisi</label>
+          <input id="nama" type="text" placeholder="Contoh: Budi" />
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
+          <div>
+            <label for="umur">Usia (tahun)</label>
+            <input id="umur" type="number" min="5" max="120" placeholder="30" />
+          </div>
+          <div>
+            <label for="jenisKelamin">Jenis kelamin</label>
+            <select id="jenisKelamin" aria-label="Jenis kelamin">
+              <option value="L">Laki-laki</option>
+              <option value="P">Perempuan</option>
+            </select>
+          </div>
+          <div>
+            <label for="aktivitas">Aktivitas</label>
+            <select id="aktivitas">
+              <option value="1.2">Sangat kurang aktif</option>
+              <option value="1.375">Kurang aktif</option>
+              <option value="1.55">Cukup aktif</option>
+              <option value="1.725">Aktif</option>
+              <option value="1.9">Sangat aktif</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">
+          <div>
+            <label for="berat">Berat (kg)</label>
+            <input id="berat" type="number" min="20" max="300" placeholder="65" />
+          </div>
+          <div>
+            <label for="tinggi">Tinggi (cm)</label>
+            <input id="tinggi" type="number" min="70" max="260" placeholder="170" />
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <button class="primary" id="btnSaveLocal">Simpan terakhir</button>
+          <button class="ghost" id="btnLoadLocal">Muat terakhir</button>
+          <div style="flex:1"></div>
+          <button class="ghost" id="btnReset">Reset</button>
+        </div>
+      </section>
+
+      <!-- Right column: food form & results -->
+      <section>
+        <div class="card" aria-labelledby="makananTitle">
+          <h2 id="makananTitle">Detail Makanan</h2>
+          <div class="small">Masukkan satu item / satu porsi makanan yang ingin dihitung.</div>
+          <div style="height:8px"></div>
+          <div>
+            <label for="jenisMakan">Jenis makan</label>
+            <select id="jenisMakan">
+              <option value="Sarapan">Sarapan</option>
+              <option value="Makan Siang">Makan Siang</option>
+              <option value="Makan Malam">Makan Malam</option>
+              <option value="Snack">Snack</option>
+            </select>
+          </div>
+          <div style="margin-top:8px">
+            <label for="namaMakanan">Nama Makanan</label>
+            <input id="namaMakanan" type="text" placeholder="Contoh: Nasi goreng" />
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
+            <div>
+              <label for="karbo">Karbohidrat (gram)</label>
+              <input id="karbo" type="number" min="0" max="2000" placeholder="30" />
+            </div>
+            <div>
+              <label for="protein">Protein (gram)</label>
+              <input id="protein" type="number" min="0" max="2000" placeholder="10" />
+            </div>
+            <div>
+              <label for="lemak">Lemak (gram)</label>
+              <input id="lemak" type="number" min="0" max="2000" placeholder="5" />
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="primary" id="btnHitung">Hitung</button>
+            <button class="ghost" id="btnTips">Tips Nutrisi</button>
+            <div style="flex:1"></div>
+            <button class="ghost" id="btnDownload">Download PDF</button>
+            <button class="ghost" id="btnShare">Share WA</button>
+          </div>
+          <p id="formError" class="error" style="display:none"></p>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div id="hasilCard" class="card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:220px">
+              <h3 id="hasilTitle">Hasil Perhitungan</h3>
+              <div class="kpi">
+                <div class="item">
+                  <div class="small">Kalori makanan</div>
+                  <div style="font-weight:700;font-size:20px" id="kaloriMakanan">0 kcal</div>
+                  <div class="hint">(Karbo: <span id="k_kcal">0</span> kcal, Protein: <span id="p_kcal">0</span> kcal, Lemak: <span id="f_kcal">0</span> kcal)</div>
+                </div>
+                <div class="item">
+                  <div class="small">BMR</div>
+                  <div style="font-weight:700" id="bmr">-</div>
+                  <div class="small">TDEE: <span id="tdee">-</span></div>
+                </div>
+                <div class="item">
+                  <div class="small">Target sesi</div>
+                  <div id="targetRange">-</div>
+                  <div class="small">% vs median: <span id="percentSession">-</span></div>
+                </div>
+              </div>
+
+              <div style="margin-top:10px">
+                <div class="small">Evaluasi:</div>
+                <div id="verdictWrapper" style="margin-top:6px"></div>
+                <div id="advice" style="margin-top:8px" class="small"></div>
+              </div>
+            </div>
+
+            <div style="width:320px">
+              <canvas id="chartMakro" width="320" height="320" aria-label="Chart makronutrien"></canvas>
+              <div style="height:10px"></div>
+              <div class="legend">
+                <div class="lg"><span class="colorbox" style="background:#2563eb"></span><span class="small">Karbo — <span id="k_g">0</span> g</span></div>
+                <div class="lg"><span class="colorbox" style="background:#16a34a"></span><span class="small">Protein — <span id="p_g">0</span> g</span></div>
+                <div class="lg"><span class="colorbox" style="background:#f59e0b"></span><span class="small">Lemak — <span id="f_g">0</span> g</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <h3>Rekomendasi & Contoh Menu</h3>
+            <div id="rekomList" class="small"></div>
+          </div>
+        </div>
+      </section>
+
+      <div style="grid-column:1/-1">
+        <div class="card">
+          <h3>Catatan & Privasi</h3>
+          <p class="small">Semua perhitungan dilakukan di perangkat Anda (client-side). Data hanya disimpan di browser jika Anda memilih 'Simpan terakhir'. Tidak ada data yang dikirim ke server.</p>
+        </div>
+      </div>
+
+    </main>
+
+    <footer>
+      <div class="small">© <span id="year"></span> — Kalkulator Kalori • Simpan lokal & PDF</div>
+    </footer>
+  </div>
+
+  <!-- Dependencies CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    // Helpers & constants
+    const KEY_LOCAL = 'kalkulatorKalori_lastInput_v1';
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function fmt(n){return Number(n).toLocaleString('id-ID')}
+
+    function getInputs(){
+      return {
+        nama: document.getElementById('nama').value.trim(),
+        umur: Number(document.getElementById('umur').value),
+        jenisKelamin: document.getElementById('jenisKelamin').value,
+        aktivitas: Number(document.getElementById('aktivitas').value),
+        berat: Number(document.getElementById('berat').value),
+        tinggi: Number(document.getElementById('tinggi').value),
+        jenisMakan: document.getElementById('jenisMakan').value,
+        namaMakanan: document.getElementById('namaMakanan').value.trim(),
+        karbo: Number(document.getElementById('karbo').value),
+        protein: Number(document.getElementById('protein').value),
+        lemak: Number(document.getElementById('lemak').value)
+      }
+    }
+
+    function validate(data){
+      const errs=[];
+      if(!data.nama) errs.push('Nama tidak boleh kosong.');
+      if(!(data.umur>=5 && data.umur<=120)) errs.push('Usia harus antara 5–120 tahun.');
+      if(!(data.berat>=20 && data.berat<=300)) errs.push('Berat harus antara 20–300 kg.');
+      if(!(data.tinggi>=70 && data.tinggi<=260)) errs.push('Tinggi harus antara 70–260 cm.');
+      if(data.karbo===0 && data.protein===0 && data.lemak===0) errs.push('Masukkan setidaknya satu makro (karbo, protein, atau lemak).');
+      if([data.karbo,data.protein,data.lemak].some(x=>isNaN(x) || x<0 || x>2000)) errs.push('Nilai makro harus angka antara 0–2000 g.');
+      return errs;
+    }
+
+    // Formulas
+    function calcBMR({jenisKelamin, berat, tinggi, umur}){
+      if(jenisKelamin==='L'){
+        return 10*berat + 6.25*tinggi - 5*umur + 5;
+      } else {
+        return 10*berat + 6.25*tinggi - 5*umur - 161;
+      }
+    }
+
+    function calcTDEE(bmr, faktor){
+      return bmr * faktor;
+    }
+
+    function kcalFromMacro(karbo, protein, lemak){
+      return {
+        k_g: karbo,
+        p_g: protein,
+        f_g: lemak,
+        k_kcal: karbo*4,
+        p_kcal: protein*4,
+        f_kcal: lemak*9,
+        total: karbo*4 + protein*4 + lemak*9
+      }
+    }
+
+    // Session % ranges
+    const sessionRanges = {
+      'Sarapan': [0.25,0.30],
+      'Makan Siang': [0.30,0.35],
+      'Makan Malam': [0.25,0.30],
+      'Snack': [0.05,0.10]
+    }
+
+    // Evaluation
+    function evaluate(kalori, targetMin, targetMax){
+      const median = (targetMin+targetMax)/2;
+      const deltaPercent = ((kalori - median)/median) * 100;
+      const absDP = Math.abs(deltaPercent);
+      let status='Sesua i';
+      let color='var(--success)';
+      if(absDP<=15){ status='Sesuai kebutuhan'; color='var(--success)'; }
+      else if(deltaPercent < -15){ status='Kekurangan'; color='var(--warn)'; }
+      else { status='Kelebihan'; color='var(--danger)'; }
+      return {status, color, deltaPercent, median}
+    }
+
+    // Chart
+    let chart=null;
+    function renderChart(k, p, f){
+      const ctx = document.getElementById('chartMakro').getContext('2d');
+      const data = [k, p, f];
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Karbo','Protein','Lemak'],
+          datasets:[{data,backgroundColor:['#2563eb','#16a34a','#f59e0b']}]
+        },
+        options:{plugins:{legend:{display:false}},animation:{duration:600}}
+      });
+    }
+
+    // Advice engine (simple rules)
+    function suggestRecommendations(inputs, kcalObj, tdee, medianTarget){
+      const delta = medianTarget - kcalObj.total; // positif => kekurangan
+      const absDelta = Math.abs(delta);
+      const suggestions = [];
+      const tipe = inputs.jenisMakan;
+
+      if(delta>0){
+        // kekurangan — rekomendasi tambah
+        if(absDelta <= 0.1 * tdee){
+          suggestions.push('Kekurangan kecil — tambahkan snack tinggi protein atau sumber karbo kecil (mis. 1 buah pisang + 1 sdm selai kacang).');
+        } else if(absDelta <= 0.25 * tdee){
+          suggestions.push('Kekurangan sedang — tambahkan porsi protein (dada ayam 100 g) + nasi 100 g.');
+        } else {
+          suggestions.push('Kekurangan besar — pertimbangkan menambah porsi makan selanjutnya atau snack padat energi (smoothie pisang + yoghurt + kacang).');
+        }
+      } else if(delta<0){
+        // kelebihan — rekomendasi kurangi
+        if(absDelta <= 0.1 * tdee){
+          suggestions.push('Kelebihan kecil — kurangi porsi karbohidrat di sisa hari atau pilih sayur & protein tanpa tambahan lemak.');
+        } else if(absDelta <= 0.25 * tdee){
+          suggestions.push('Kelebihan sedang — pertimbangkan beraktivitas ringan setelah makan (jalan 20–30 menit) dan makan lebih ringan di sesi berikutnya.');
+        } else {
+          suggestions.push('Kelebihan besar — kurangi porsi, pilih makanan rendah lemak, dan seimbangkan dengan aktivitas fisik.');
+        }
+      } else {
+        suggestions.push('Sesua i — porsi sudah mendekati target sesi. Pertahankan pola makan seimbang.');
+      }
+
+      // Macro-specific recommendations
+      const protGram = inputs.protein;
+      if(protGram < 0.15 * (inputs.berat || 60)){ // heuristic: protein kurang jika <0.15*g berat
+        suggestions.push('Protein relatif rendah — tambahkan 1 porsi telur atau tahu/tempe pada makan berikutnya.');
+      }
+
+      // contoh menu singkat (lokal)
+      suggestions.push('Contoh menu: Nasi 100 g + Dada ayam 100 g + Sayur — ≈ 450–600 kcal.');
+
+      return suggestions;
+    }
+
+    // Main compute
+    function computeAndRender(){
+      const inputs = getInputs();
+      const errs = validate(inputs);
+      const errEl = document.getElementById('formError');
+      if(errs.length){ errEl.style.display='block'; errEl.textContent = errs.join(' '); return; }
+      errEl.style.display='none';
+
+      // calc
+      const bmr = calcBMR(inputs);
+      const tdee = calcTDEE(bmr, inputs.aktivitas);
+      const kcalObj = kcalFromMacro(inputs.karbo, inputs.protein, inputs.lemak);
+      const range = sessionRanges[inputs.jenisMakan];
+      const targetMin = tdee * range[0];
+      const targetMax = tdee * range[1];
+      const evalRes = evaluate(kcalObj.total, targetMin, targetMax);
+
+      // render numbers
+      document.getElementById('kaloriMakanan').textContent = fmt(kcalObj.total) + ' kcal';
+      document.getElementById('k_kcal').textContent = fmt(kcalObj.k_kcal);
+      document.getElementById('p_kcal').textContent = fmt(kcalObj.p_kcal);
+      document.getElementById('f_kcal').textContent = fmt(kcalObj.f_kcal);
+      document.getElementById('bmr').textContent = Math.round(bmr) + ' kcal';
+      document.getElementById('tdee').textContent = Math.round(tdee) + ' kcal';
+      document.getElementById('targetRange').textContent = Math.round(targetMin) + ' — ' + Math.round(targetMax) + ' kcal';
+      const pct = Math.round((kcalObj.total / ((targetMin+targetMax)/2))*100);
+      document.getElementById('percentSession').textContent = pct + '%';
+
+      // verdict
+      const verdictWrap = document.getElementById('verdictWrapper');
+      verdictWrap.innerHTML = '';
+      const v = document.createElement('span');
+      v.className = 'verdict';
+      v.style.background = evalRes.color;
+      v.textContent = evalRes.status + ' (' + Math.round(evalRes.deltaPercent) + '%)';
+      verdictWrap.appendChild(v);
+
+      // advice
+      const advice = document.getElementById('advice');
+      const recs = suggestRecommendations(inputs,kcalObj,tdee,evalRes.median || ((targetMin+targetMax)/2));
+      advice.innerHTML = recs.slice(0,2).map(x=>'<div>• '+x+'</div>').join('');
+
+      // rekom list
+      const rekom = document.getElementById('rekomList');
+      rekom.innerHTML = recs.map((r,i)=>'<div>• '+r+'</div>').join('');
+
+      // chart
+      renderChart(kcalObj.k_g, kcalObj.p_g, kcalObj.f_g);
+      document.getElementById('k_g').textContent = kcalObj.k_g;
+      document.getElementById('p_g').textContent = kcalObj.p_g;
+      document.getElementById('f_g').textContent = kcalObj.f_g;
+
+      // show card
+      document.getElementById('hasilCard').style.display = 'block';
+
+      // prepare share text
+      window._lastShareText = `Hasil Kalkulator Kalori:\nNama: ${inputs.nama}\nMakanan: ${inputs.namaMakanan || inputs.jenisMakan}\nKalori: ${Math.round(kcalObj.total)} kcal (${pct}% dari target sesi)\nEvaluasi: ${evalRes.status}\nSaran: ${recs[0]}`;
+
+      // auto-save to local (optional behaviour: not auto, only when user clicks save)
+      window._lastResult = {inputs,kcalObj,bmr,tdee,evalRes};
+    }
+
+    // PDF download
+    async function downloadPDF(){
+      const el = document.getElementById('hasilCard');
+      if(!el || el.style.display==='none') return alert('Lakukan perhitungan terlebih dahulu.');
+      const btn = document.getElementById('btnDownload');
+      btn.textContent = 'Mempersiapkan...'; btn.disabled=true;
+      await html2canvas(el, {scale:2, useCORS:true}).then(async canvas=>{
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({orientation:'portrait', unit:'pt', format:'a4'});
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        // add header text
+        pdf.setFontSize(14); pdf.text('Laporan Kalori', 40, 40);
+        pdf.setFontSize(11); pdf.text(`Tanggal: ${new Date().toLocaleString()}`, 40, 58);
+        // insert image scaled
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfW = pageWidth - 80;
+        const pdfH = (imgProps.height * pdfW) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 40, 80, pdfW, pdfH);
+        const filename = `Laporan-Kalori-${(window._lastResult && window._lastResult.inputs.nama)||'User'}-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'')}.pdf`;
+        pdf.save(filename);
+      }).catch(err=>{console.error(err); alert('Gagal membuat PDF. Pastikan tidak ada resource cross-origin.');});
+      btn.textContent = 'Download PDF'; btn.disabled=false;
+    }
+
+    // Share WhatsApp
+    function shareWA(){
+      if(!window._lastShareText) return alert('Lakukan perhitungan terlebih dahulu.');
+      const txt = encodeURIComponent(window._lastShareText);
+      const url = `https://wa.me/?text=${txt}`;
+      window.open(url,'_blank');
+    }
+
+    // Local storage save/load
+    function saveLocal(){
+      const inputs = getInputs();
+      localStorage.setItem(KEY_LOCAL, JSON.stringify(inputs));
+      alert('Input terakhir disimpan di browser.');
+    }
+    function loadLocal(){
+      const raw = localStorage.getItem(KEY_LOCAL);
+      if(!raw) return alert('Tidak ada data tersimpan.');
+      try{
+        const d = JSON.parse(raw);
+        document.getElementById('nama').value = d.nama||'';
+        document.getElementById('umur').value = d.umur||'';
+        document.getElementById('jenisKelamin').value = d.jenisKelamin||'L';
+        document.getElementById('aktivitas').value = d.aktivitas||'1.55';
+        document.getElementById('berat').value = d.berat||'';
+        document.getElementById('tinggi').value = d.tinggi||'';
+        document.getElementById('jenisMakan').value = d.jenisMakan||'Sarapan';
+        document.getElementById('namaMakanan').value = d.namaMakanan||'';
+        document.getElementById('karbo').value = d.karbo||'';
+        document.getElementById('protein').value = d.protein||'';
+        document.getElementById('lemak').value = d.lemak||'';
+        alert('Data dimuat dari penyimpanan lokal.');
+      }catch(e){alert('Gagal memuat data.');}
+    }
+
+    // Tips (simple random tip)
+    const tips = [
+      'Pilih sumber protein tanpa lemak untuk kontrol kalori (dada ayam, tahu, tempe).',
+      'Gunakan porsi sayuran untuk meningkatkan volume tanpa menambah banyak kalori.',
+      'Perhatikan saus & minyak — sering jadi sumber lemak tersembunyi.',
+      'Minum air putih sebelum makan dapat membantu kontrol nafsu makan.'
+    ];
+    function showTip(){
+      alert(tips[Math.floor(Math.random()*tips.length)]);
+    }
+
+    // Events
+    document.getElementById('btnHitung').addEventListener('click', computeAndRender);
+    document.getElementById('btnDownload').addEventListener('click', downloadPDF);
+    document.getElementById('btnShare').addEventListener('click', shareWA);
+    document.getElementById('btnSaveLocal').addEventListener('click', saveLocal);
+    document.getElementById('btnLoadLocal').addEventListener('click', loadLocal);
+    document.getElementById('btnTips').addEventListener('click', showTip);
+    document.getElementById('btnReset').addEventListener('click', ()=>{ if(confirm('Reset semua input?')) location.reload(); });
+
+    // On load: try load last input to help user
+    window.addEventListener('load', ()=>{
+      const raw = localStorage.getItem(KEY_LOCAL);
+      if(raw){
+        try{
+          const d = JSON.parse(raw);
+          // prefill only some key fields for convenience
+          document.getElementById('nama').value = d.nama||'';
+          document.getElementById('umur').value = d.umur||'';
+          document.getElementById('jenisKelamin').value = d.jenisKelamin||'L';
+          document.getElementById('aktivitas').value = d.aktivitas||'1.55';
+          document.getElementById('berat').value = d.berat||'';
+          document.getElementById('tinggi').value = d.tinggi||'';
+        }catch(e){/* ignore */}
+      }
+    });
+
+  </script>
+</body>
+</html>
